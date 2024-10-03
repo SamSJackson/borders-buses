@@ -34,7 +34,7 @@ Scraping this will not be easy and it will require having the process running pe
 ### Live Scraping
 
 Information on the location of a given bus is served by such an address:
-``` https://www.bordersbuses.co.uk/services/BORD/51 ```
+``` https://www.bordersbuses.co.uk/_ajax/lines/vehicles?lines%5B0%5D=BORD:51 ```
 
 Response is in a json-format (praise). 
 
