@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+import json 
 
 async def fetch_multiple(urls):
     async with aiohttp.ClientSession() as session:
@@ -9,7 +10,9 @@ async def fetch_multiple(urls):
 
 async def fetch(session, url):
     async with session.get(url) as response:
-        return await response.json()
+        text = await response.text()
+        print(text)
+        return json.loads(text)
 
 async def main():
     routes = ["51", "67", "X62"]
@@ -49,8 +52,7 @@ async def main():
     
     return all_requests
 
-loop = asyncio.get_event_loop()
-results = loop.run_until_complete(main())
+results = asyncio.run(main())
 
 results = [
     journey
@@ -58,7 +60,7 @@ results = [
     for journey in j
 ]
 
-print(f"{len(results)=}")
+print(f"{results}")
 # This is the information that I want to collect.
 # Take from multiple bus services - X62, 51, 67
 
