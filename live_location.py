@@ -1,28 +1,64 @@
-import pandas as pd
-import time 
-import requests
+import aiohttp
+import asyncio
 
-req = requests.get("https://www.bordersbuses.co.uk/_ajax/lines/vehicles?lines%5B0%5D=BORD:51")
+async def fetch_multiple(urls):
+    async with aiohttp.ClientSession() as session:
+        tasks = [fetch(session, url) for url in urls]
+        responses = await asyncio.gather(*tasks)
+    return responses
 
-req_json = req.json()
+async def fetch(session, url):
+    async with session.get(url) as response:
+        return await response.json()
 
-buses = req_json['features']
+async def main():
+    routes = ["51", "67", "X62"]
+    base_url = "https://www.bordersbuses.co.uk/_ajax/lines/vehicles?lines%5B0%5D=BORD:"
+    urls = [base_url + route for route in routes]
 
-relevant_features = []
-for bus in buses:
-    coordinates = bus['geometry']['coordinates']
+    requests = await fetch_multiple(urls)
 
-    properties = bus['properties']
-    direction = properties['direction']
-    line = properties['line']
-    vehicle_id = properties['vehicle']
-    fleet_number = properties['meta']['fleet_number']
-    bearing = properties['bearing']
-    compass_direction = properties['compassDirection']
+    all_requests = [] 
+    for req_json in requests:
+        buses = req_json['features']
+        
+        relevant_features = []
+        for bus in buses:
+            coordinates = bus['geometry']['coordinates']
+            
+            properties = bus['properties']
+            direction = properties['direction']
+            line = properties['line']
+            vehicle_id = properties['vehicle']
+            fleet_number = properties['meta']['fleet_number']
+            bearing = properties.get('bearing', None) 
+            compass_direction = properties.get('compassDirection', None)
 
+            relevant_features.append(
+                    (
+                        vehicle_id, 
+                        fleet_number, 
+                        line, 
+                        bearing, 
+                        compass_direction, 
+                        coordinates
+                    )
+                )
 
-    relevant_features.append((vehicle_id, fleet_number, line, bearing, compass_direction, coordinates))
+        all_requests.append(relevant_features)
+    
+    return all_requests
 
+loop = asyncio.get_event_loop()
+results = loop.run_until_complete(main())
+
+results = [
+    journey
+    for j in results
+    for journey in j
+]
+
+print(f"{len(results)=}")
 # This is the information that I want to collect.
 # Take from multiple bus services - X62, 51, 67
 
