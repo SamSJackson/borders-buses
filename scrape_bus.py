@@ -1,7 +1,11 @@
+# LOGGING
+import logging 
+
 # SCRAPING IMPORTS
 import xmltodict
 import functools 
 import requests
+import time 
 import os
 
 from datetime import datetime
@@ -18,13 +22,13 @@ bus_key = os.environ.get("BUS_API")
 # SQL Environment Variables & Config 
 sql_pwd = os.environ.get("SQL_PWD")
 db_config = {
-        'username': 'sa',
-        'password': os.environ.get("SQL_PWD"),
-        'server': os.environ.get("SQL_SERVER"),
-        'port': '1433',
-        'database': os.environ.get("BUS_DB"),
-        'driver': 'ODBC Driver 18 for SQL Server',
-        'table': os.environ.get("BUS_TABLE")
+    'username': 'sa',
+    'password': os.environ.get("SQL_PWD"),
+    'server': os.environ.get("SQL_SERVER"),
+    'port': '1433',
+    'database': os.environ.get("BUS_DB"),
+    'driver': 'ODBC Driver 18 for SQL Server',
+    'table': os.environ.get("BUS_TABLE")
 }
 
 def get_data():
@@ -32,7 +36,8 @@ def get_data():
     response = requests.get(url)
 
     if response.status_code != 200:
-        raise f"Request Error, Status Code: {response.status_code}"
+        logging.info('{datetime.now()}: Request Error. Status Code: {response.status_code}.')
+        return [] 
 
     data_dict = xmltodict.parse(response.text)
 
@@ -50,6 +55,7 @@ def get_data():
 
         journey = bus.get('MonitoredVehicleJourney')
         if not journey or not timestamp: 
+            logging.info('{datetime.now()}: No timestamp or journey information.')
             continue 
     
 
@@ -63,6 +69,7 @@ def get_data():
             latitude = coords.get('Latitude')
             longitude = coords.get('Longitude')
         else:
+            logging.info('{timestamp}: No coords')
             latitude = None
             longitude = None
 
@@ -102,7 +109,7 @@ def get_data():
 
     return information
 
-def insert_to_sql(bus_data, config):
+def gen_connection(config):
     connection_uri = sa.engine.url.URL(
         'mssql+pyodbc',
         username=config['username'],
@@ -115,7 +122,11 @@ def insert_to_sql(bus_data, config):
             'TrustServerCertificate': 'yes'
         }
     )
+    return connection_uri
 
+def insert_to_sql(bus_data, config):
+    connection_uri = gen_connection(config)
+        
     column_names = [
         "id", 
         "time",
@@ -137,7 +148,7 @@ def insert_to_sql(bus_data, config):
 
     table = sa.table(config["table"], *columns)
 
-    engine = sa.create_engine(connection_uri)
+    engine = sa.create_engine(connection_uri, pool_recycle=360)
     with engine.begin() as conn:
         for bus in bus_data:
             insert_query = sa.insert(table).values(bus)
@@ -145,7 +156,32 @@ def insert_to_sql(bus_data, config):
             result = conn.execute(insert_query)
         conn.commit()
 
+
 if __name__ == '__main__':
-    bus_data = get_data()
-    insert_to_sql(bus_data, db_config)
+    logging.basicConfig(filename='scraping.log', level=logging.INFO)
+    # 2024-11-7 is 7th of November, 2024
+    end_date = datetime(2024, 11, 7)
+    
+    connection_uri = gen_connection(db_config) 
+    engine = sa.create_engine(connection_uri, pool_recycle=360)
+    with engine.begin() as conn:
+        query = sa.text(f'SELECT TOP 1 time FROM {db_config["table"]} ORDER BY id ASC')
+        latest_time = pd.read_sql_query(query, conn)['time'][0]
+    
+    logging.info(f'{datetime.now()}: Scraping started.')
+    while datetime.now() < end_date:
+        bus_data = get_data()
+        if len(bus_data) == 0:
+            continue
+
+        timestamp = bus_data[0]['time']
+        if timestamp <= latest_time: 
+            time.sleep(10)
+            continue 
+
+        insert_to_sql(bus_data, db_config)
+        latest_time = timestamp 
+        logging.info(f'{timestamp}: Insertion.')
+        print(f"{timestamp}: Insertion.")
+        time.sleep(10)
 
