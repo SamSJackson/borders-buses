@@ -171,7 +171,11 @@ if __name__ == '__main__':
     engine = sa.create_engine(connection_uri, pool_recycle=360)
     with engine.begin() as conn:
         query = sa.text(f'SELECT TOP 1 time FROM {db_config["table"]} ORDER BY id ASC')
-        latest_time = pd.read_sql_query(query, conn)['time'][0]
+        latest_time = pd.read_sql_query(query, conn)['time']
+        if len(latest_time) == 0:
+            time.sleep(10)
+            continue 
+        latest_time = latest_time[0]
     
     logging.info(f'({string_time_now()}) Scraping started.')
     while datetime.now() < end_date:
