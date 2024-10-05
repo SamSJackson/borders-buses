@@ -36,7 +36,7 @@ def string_time_now():
     return datetime.strftime(datetime.now(), time_format)
 
 def get_data():
-    url = f"https://data.bus-data.dft.gov.uk/api/v1/datafeed/?lineRef=51&operatorRef=BORD&api_key={bus_key}"
+    url = f"https://data.bus-data.dft.gov.uk/api/v1/datafeed/?lineRef=51&lineRef=X62&lineRef=67&operatorRef=BORD&api_key={bus_key}"
     response = requests.get(url)
 
     if response.status_code != 200:
