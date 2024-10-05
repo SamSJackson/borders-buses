@@ -35,8 +35,8 @@ for stop in all_stops_info:
 df = pd.DataFrame(data=information, columns=["stop_id", "stop_name", "stop_type", "coordinates"])
 
 try:
-    df.to_csv(f"stops/live_route_{bus_route}.csv", index=False, mode='x')
-    print(f"Written to CSV in /stops/live_route_{bus_route}.csv")
+    df.to_csv(f"live_route_{bus_route}.csv", index=False, mode='x')
+    print(f"Written to CSV in live_route_{bus_route}.csv")
 except FileExistsError as e:
     print("File already exists")
 except:
