@@ -31,12 +31,16 @@ db_config = {
     'table': os.environ.get("BUS_TABLE")
 }
 
+time_format = "%Y-%m-%d, %H:%M:%S"
+def string_time_now():
+    return datetime.strftime(datetime.now(), time_format)
+
 def get_data():
     url = f"https://data.bus-data.dft.gov.uk/api/v1/datafeed/?lineRef=51&operatorRef=BORD&api_key={bus_key}"
     response = requests.get(url)
 
     if response.status_code != 200:
-        logging.info('{datetime.now()}: Request Error. Status Code: {response.status_code}.')
+        logging.info('({string_time_now()}) Request Error. Status Code: {response.status_code}.')
         return [] 
 
     data_dict = xmltodict.parse(response.text)
@@ -55,7 +59,7 @@ def get_data():
 
         journey = bus.get('MonitoredVehicleJourney')
         if not journey or not timestamp: 
-            logging.info('{datetime.now()}: No timestamp or journey information.')
+            logging.info('({string_time_now()}) No timestamp or journey information.')
             continue 
     
 
@@ -158,7 +162,8 @@ def insert_to_sql(bus_data, config):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(filename='scraping.log', level=logging.INFO)
+    FORMAT = "%(message)s"
+    logging.basicConfig(filename='scraping.log', level=logging.INFO, format=FORMAT)
     # 2024-11-7 is 7th of November, 2024
     end_date = datetime(2024, 11, 7)
     
@@ -168,7 +173,7 @@ if __name__ == '__main__':
         query = sa.text(f'SELECT TOP 1 time FROM {db_config["table"]} ORDER BY id ASC')
         latest_time = pd.read_sql_query(query, conn)['time'][0]
     
-    logging.info(f'{datetime.now()}: Scraping started.')
+    logging.info(f'({string_time_now()}) Scraping started.')
     while datetime.now() < end_date:
         bus_data = get_data()
         if len(bus_data) == 0:
@@ -181,7 +186,7 @@ if __name__ == '__main__':
 
         insert_to_sql(bus_data, db_config)
         latest_time = timestamp 
-        logging.info(f'{timestamp}: Insertion.')
-        print(f"{timestamp}: Insertion.")
+        logging.info(f'({datetime.strftime(timestamp, time_format)}) Insertion.')
+        print(f"({datetime.strftime(timestamp, time_format)}) Insertion.")
         time.sleep(10)
 
