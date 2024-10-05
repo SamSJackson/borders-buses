@@ -1,0 +1,2 @@
+curl "https://data.bus-data.dft.gov.uk/api/v1/datafeed/?lineRef=51&api_key=$BUS_API"
+curl "https://data.bus-data.dft.gov.uk/api/v1/datafeed/?lineRef=51&operatorRef=BORD&api_key=$BUS_API" | yq -p=xml -o=json
