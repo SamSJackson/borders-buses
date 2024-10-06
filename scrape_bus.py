@@ -41,10 +41,7 @@ def string_time_now():
 
 def get_data():
     base_url = "https://data.bus-data.dft.gov.uk/api/v1/datafeed/?lineRef={}&operatorRef=BORD&api_key={}"
-    urls = [base_url.format(line, bus_key) for line in ["51", "X62", "67"]]
-
-    url = f"https://data.bus-data.dft.gov.uk/api/v1/datafeed/?lineRef=51&lineRef=X62&operatorRef=BORD&api_key={bus_key}"
-    response = requests.get(url)
+    urls = [base_url.format(line, bus_key) for line in ["51", "X62"]]
 
     responses = [requests.get(url) for url in urls]
     valid_responses = [response for response in responses if response.status_code == 200]
