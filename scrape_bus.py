@@ -34,6 +34,7 @@ db_config = {
 }
 
 SCRAPE_HOME = os.environ.get("SCRAPE_HOME")
+WAIT_TIME = 15
 
 time_format = "%Y-%m-%d, %H:%M:%S"
 def string_time_now():
@@ -187,17 +188,17 @@ if __name__ == '__main__':
     while datetime.now() < end_date:
         bus_data = get_data()
         if len(bus_data) == 0:
-            time.sleep(10)
+            time.sleep(15)
             continue
 
         timestamp = bus_data[0]['time']
         if timestamp <= latest_time: 
-            time.sleep(10)
+            time.sleep(15)
             continue 
 
         insert_to_sql(bus_data, db_config)
         latest_time = timestamp 
         logging.info(f'({datetime.strftime(timestamp, time_format)}) Insertion.')
         print(f"({datetime.strftime(timestamp, time_format)}) Insertion.")
-        time.sleep(10)
+        time.sleep(15)
 
