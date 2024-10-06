@@ -196,8 +196,8 @@ if __name__ == '__main__':
             latest_time = datetime.now(timezone.utc)
         else:
             latest_time = latest_time[0]
+            latest_time = latest_time.tz_localize(timezone.utc)
   
-    latest_time = latest_time.tz_localize(timezone.utc)
     bus_data = get_data()
     
     while datetime.now() < end_date:
