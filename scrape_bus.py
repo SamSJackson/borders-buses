@@ -1,5 +1,9 @@
+#!/home/sam/Desktop/borders-buses/buses_env/bin/python 
+
 # LOGGING
-import logging 
+import logging
+from zoneinfo import ZoneInfo
+from datetime import datetime
 
 # SCRAPING IMPORTS
 import xmltodict
@@ -7,8 +11,6 @@ import functools
 import requests
 import time 
 import os
-
-from datetime import datetime
 
 # SQL IMPORTS
 import sqlalchemy as sa
@@ -31,16 +33,19 @@ db_config = {
     'table': os.environ.get("BUS_TABLE")
 }
 
+SCRAPE_HOME = os.environ.get("SCRAPE_HOME")
+
 time_format = "%Y-%m-%d, %H:%M:%S"
 def string_time_now():
-    return datetime.strftime(datetime.now(), time_format)
+    tz = ZoneInfo(key='Europe/London')
+    return datetime.strftime(datetime.now(tz=tz), time_format)
 
 def get_data():
     url = f"https://data.bus-data.dft.gov.uk/api/v1/datafeed/?lineRef=51&lineRef=X62&lineRef=67&operatorRef=BORD&api_key={bus_key}"
     response = requests.get(url)
 
     if response.status_code != 200:
-        logging.info('({string_time_now()}) Request Error. Status Code: {response.status_code}.')
+        logging.info(f'({string_time_now()}) Request Error. Status Code: {response.status_code}.')
         return [] 
 
     data_dict = xmltodict.parse(response.text)
@@ -59,7 +64,7 @@ def get_data():
 
         journey = bus.get('MonitoredVehicleJourney')
         if not journey or not timestamp: 
-            logging.info('({string_time_now()}) No timestamp or journey information.')
+            logging.info(f'({string_time_now()}) No timestamp or journey information.')
             continue 
     
 
@@ -73,7 +78,7 @@ def get_data():
             latitude = coords.get('Latitude')
             longitude = coords.get('Longitude')
         else:
-            logging.info('{timestamp}: No coords')
+            logging.info(f'{timestamp}: No coords')
             latitude = None
             longitude = None
 
@@ -163,10 +168,12 @@ def insert_to_sql(bus_data, config):
 
 if __name__ == '__main__':
     FORMAT = "%(message)s"
-    logging.basicConfig(filename='scraping.log', level=logging.INFO, format=FORMAT)
+    logging.basicConfig(filename=f'{SCRAPE_HOME}/scraping.log', level=logging.INFO, format=FORMAT)
+    logging.info(f'({string_time_now()}) Scraping started.')
+
     # 2024-11-7 is 7th of November, 2024
     end_date = datetime(2024, 11, 7)
-    
+
     connection_uri = gen_connection(db_config) 
     engine = sa.create_engine(connection_uri, pool_recycle=360)
     with engine.begin() as conn:
@@ -177,10 +184,10 @@ if __name__ == '__main__':
         else:
             latest_time = latest_time[0]
     
-    logging.info(f'({string_time_now()}) Scraping started.')
     while datetime.now() < end_date:
         bus_data = get_data()
         if len(bus_data) == 0:
+            time.sleep(10)
             continue
 
         timestamp = bus_data[0]['time']
