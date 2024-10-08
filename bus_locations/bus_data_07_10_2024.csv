@@ -1,5 +1,4 @@
 id,time,line_ref,vehicle_id,number_plate,journey_id,direction,origin,destination,origin_est_departure,destination_est_arrival,latitude,longitude,bearing
---,----,--------,----------,------------,----------,---------,------,-----------,--------------------,-----------------------,--------,---------,-------
 1875,2024-10-06 12:35:54.000,51,11922,SN69ZNO,1200,outbound,Transport_Interchange,Edinburgh_Bus_Station__Stance_8,2024-10-06 11:00:00.000,2024-10-06 13:22:00.000,55.892145,-3.066253,272
 1876,2024-10-06 12:36:04.000,51,11702,YJ17FWS,1150,inbound,Edinburgh_Bus_Station__Stance_8,Transport_Interchange,2024-10-06 10:50:00.000,2024-10-06 12:57:00.000,55.597648,-2.711415,242
 1877,2024-10-06 12:36:07.000,X62,11801,YX67UZB,1330,outbound,Transport_Interchange,Edinburgh_Bus_Station__Stance_10,2024-10-06 12:30:00.000,2024-10-06 14:30:00.000,55.614681,-2.807086,311

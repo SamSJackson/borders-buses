@@ -24,15 +24,17 @@ We want the following information from the features
 information = []
 for stop in all_stops_info: 
     coordinates = stop['geometry']['coordinates']
+    long = coordinates[0]
+    lat = coordinates[1]
     properties = stop['properties']
 
     name = properties['commonName']
     stop_type = properties['stopType']
     atco = properties['atcoCode']
 
-    information.append((atco, name, stop_type, coordinates))
+    information.append((atco, name, stop_type, long, lat))
 
-df = pd.DataFrame(data=information, columns=["stop_id", "stop_name", "stop_type", "coordinates"])
+df = pd.DataFrame(data=information, columns=["stop_id", "stop_name", "stop_type", "longitude", "latitude"])
 
 try:
     df.to_csv(f"live_route_{bus_route}.csv", index=False, mode='x')
